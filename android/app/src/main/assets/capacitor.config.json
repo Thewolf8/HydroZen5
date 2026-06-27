@@ -1,0 +1,19 @@
+{
+  "appId": "com.aquaflow.tracker",
+  "appName": "AquaFlow",
+  "webDir": "public",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_aquaflow",
+      "iconColor": "#0EA5E9",
+      "sound": "default"
+    },
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "launchAutoHide": true,
+      "backgroundColor": "#0f172a",
+      "showSpinner": false
+    }
+  }
+}

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">AquaFlow</string>
+    <string name="title_activity_main">AquaFlow</string>
+    <string name="package_name">com.aquaflow.tracker</string>
+    <string name="custom_url_scheme">com.aquaflow.tracker</string>
+</resources>
