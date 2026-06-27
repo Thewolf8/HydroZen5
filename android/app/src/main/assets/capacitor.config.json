@@ -2,7 +2,6 @@
   "appId": "com.aquaflow.tracker",
   "appName": "AquaFlow",
   "webDir": "public",
-  "bundledWebRuntime": false,
   "plugins": {
     "LocalNotifications": {
       "smallIcon": "ic_stat_aquaflow",
