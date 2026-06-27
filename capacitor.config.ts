@@ -4,7 +4,6 @@ const config: CapacitorConfig = {
   appId: 'com.aquaflow.tracker',
   appName: 'AquaFlow',
   webDir: 'dist',
-  bundledWebRuntime: false,
   plugins: {
     LocalNotifications: {
       smallIcon: 'ic_stat_aquaflow',
@@ -18,11 +17,6 @@ const config: CapacitorConfig = {
       androidSplashResourceName: 'splash',
       showSpinner: false,
     },
-  },
-  android: {
-    allowMixedContent: false,
-    captureInput: true,
-    webContentsDebuggingEnabled: false,
   },
 };
 
