@@ -22,8 +22,14 @@ export type Page = 'dashboard' | 'log' | 'history' | 'goals' | 'export' | 'setti
 
 function AppInner() {
   const { settings, setDailyGoal, setReminder, updateSettings } = useSettings();
-  const { logs, todayLog, stats, addDrink, deleteEntry, clearAll, resetData, importLogs } = useWaterLogs();
-  const [page, setPage] = useState<Page>('dashboard');
+
+  // Pass goalMl directly so useWaterLogs reruns stats when it changes
+  const {
+    logs, todayLog, stats,
+    addDrink, deleteEntry, clearAll, resetData, importLogs,
+  } = useWaterLogs(settings.dailyGoalMl, settings.useHydrationFactors);
+
+  const [page, setPage]           = useState<Page>('dashboard');
   const [prevGoalMet, setPrevGoalMet] = useState(false);
 
   const showToast = useCallback((msg: string, desc?: string) => {
@@ -35,10 +41,10 @@ function AppInner() {
     const nowMet = stats.goalPercent >= 100;
     if (nowMet && !prevGoalMet && settings.notifications.goalAchieved) {
       scheduleGoalAchievedNotification('🎉 Goal achieved!', "You've hit your daily hydration target!");
-      toast.success('🎉 Daily goal reached!', { description: "Keep it up!" });
+      toast.success('🎉 Daily goal reached!', { description: 'Keep it up!' });
     }
     setPrevGoalMet(nowMet);
-  }, [stats.goalPercent]);
+  }, [stats.goalPercent]);  // eslint-disable-line
 
   function handleAddDrink(amountMl: number, drinkType: string, note?: string) {
     addDrink(amountMl, drinkType as DrinkTypeId, note);
@@ -48,42 +54,33 @@ function AppInner() {
 
   function handleQuickAdd(amountMl: number, drinkType: string) {
     addDrink(amountMl, drinkType as DrinkTypeId);
-    toast.success('💧 Drink logged!', { description: `+${amountMl} ml added` });
+    toast.success('💧 Drink logged!', { description: `+${amountMl} ml` });
   }
 
   const pageVariants = {
     hidden:  { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.28, ease: 'easeOut' as const } },
-    exit:    { opacity: 0, y: -6, transition: { duration: 0.18 } },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: 'easeOut' as const } },
+    exit:    { opacity: 0, y: -6, transition: { duration: 0.15 } },
   };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header currentPage={page} />
-      <MobileNav
-        currentPage={page}
-        onNavigate={setPage}
-        onAddNew={() => setPage('log')}
-      />
+      <MobileNav currentPage={page} onNavigate={setPage} onAddNew={() => setPage('log')} />
 
       <main className="md:ml-64 pt-16 pb-20 md:pb-4 min-h-screen">
         <div className="max-w-2xl mx-auto px-4 sm:px-6">
           <AnimatePresence mode="wait">
-            <motion.div
-              key={page}
-              variants={pageVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-            >
+            <motion.div key={page} variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+
               {page === 'dashboard' && (
                 <DashboardPage
                   stats={stats}
                   unit={settings.unit}
-                  onAddDrink={handleQuickAdd}
+                  onQuickAdd={handleQuickAdd}
                   onNavigate={setPage}
                   onDelete={id => { deleteEntry(id); showToast('Entry deleted'); }}
-                  recentEntries={todayLog.entries.slice().sort((a,b) => b.timestamp.localeCompare(a.timestamp))}
+                  recentEntries={todayLog.entries.slice().sort((a, b) => b.timestamp.localeCompare(a.timestamp))}
                   showMotivation={settings.showMotivation}
                 />
               )}
@@ -105,7 +102,7 @@ function AppInner() {
                   unit={settings.unit}
                   goalMl={settings.dailyGoalMl}
                   onDelete={id => { deleteEntry(id); showToast('Entry deleted'); }}
-                  onClearAll={() => { clearAll(); showToast('All history cleared'); }}
+                  onClearAll={() => { clearAll(); showToast('History cleared'); }}
                 />
               )}
 
@@ -113,7 +110,7 @@ function AppInner() {
                 <GoalsPage
                   settings={settings}
                   unit={settings.unit}
-                  onSaveGoal={ml => { setDailyGoal(ml); }}
+                  onSaveGoal={ml => setDailyGoal(ml)}
                   onSaveReminder={patch => setReminder(patch)}
                   onToast={showToast}
                 />
@@ -123,10 +120,7 @@ function AppInner() {
                 <ExportPage
                   logs={logs}
                   unit={settings.unit}
-                  onImport={(incoming, merge) => {
-                    importLogs(incoming, merge);
-                    showToast('Data imported!');
-                  }}
+                  onImport={(incoming, merge) => { importLogs(incoming, merge); showToast('Data imported!'); }}
                   onToast={showToast}
                 />
               )}
@@ -139,6 +133,7 @@ function AppInner() {
                   onToast={showToast}
                 />
               )}
+
             </motion.div>
           </AnimatePresence>
         </div>
@@ -149,9 +144,7 @@ function AppInner() {
 
 export default function App() {
   const { settings } = useSettings();
-  const [onboarded, setOnboarded] = useState(
-    () => localStorage.getItem(ONBOARDED_KEY) === 'true'
-  );
+  const [onboarded, setOnboarded] = useState(() => localStorage.getItem(ONBOARDED_KEY) === 'true');
 
   if (!onboarded) {
     return (
