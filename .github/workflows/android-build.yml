@@ -1,0 +1,72 @@
+name: 🚰 Build AquaFlow APK
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: AquaFlow APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+
+      # ── 1. Checkout ────────────────────────────────────────────
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Java 21 ────────────────────────────────────────────
+      - name: ☕ Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: gradle
+
+      # ── 3. Node 22 ────────────────────────────────────────────
+      - name: 🟢 Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # ── 4. Install dependencies ────────────────────────────────
+      - name: 📦 Install npm dependencies
+        run: npm install
+
+      - name: 🔧 Install Capacitor CLI
+        run: npm install --no-save @capacitor/cli@^8
+
+      # ── 5. Build React/Vite web app ────────────────────────────
+      - name: 🔨 Build web app
+        run: npx vite build
+
+      # ── 6. Capacitor sync ─────────────────────────────────────
+      - name: 🔄 Capacitor sync → Android
+        run: npx cap sync android
+
+      # ── 7. Generate app icons ──────────────────────────────────
+      - name: 🎨 Generate app icons
+        run: |
+          npm install @capacitor/assets
+          npx @capacitor/assets generate --android
+
+      # ── 8. Build release APK ───────────────────────────────────
+      - name: 📱 Build unsigned release APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+      # ── 9. Upload artifact ─────────────────────────────────────
+      - name: 📤 Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AquaFlow-Build-${{ github.run_number }}
+          path: android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
+          retention-days: 30
